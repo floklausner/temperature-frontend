@@ -1,0 +1,6 @@
+<mat-select *ngIf="options !== null" [(value)]="selectedMonth"
+            (selectionChange)="monthSelectionChanged($event)">
+  <mat-option *ngFor="let month of options" [value]="month">
+    {{month}}
+  </mat-option>
+</mat-select>

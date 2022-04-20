@@ -1,0 +1,7 @@
+$spacing: 2em;
+$double-spacing: $spacing * 2;
+
+mat-select {
+  margin: $spacing $double-spacing;
+  width: 60%;
+}

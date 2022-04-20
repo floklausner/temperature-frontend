@@ -1,0 +1,159 @@
+= Prüfungsteil: Frontend - Angular
+Markus Haslinger
+1.0.0, {docdate}: 5ahitm - NVS - Prüfung WS (Sem.1)
+ifndef::imagesdir[:imagesdir: images]
+:icons: font
+:sectnums:
+:experimental:
+:toc: left
+
+== Hilfsmittel
+
+=== Erlaubte Hilfsmittel
+
+* Stackoverflow
+* Dokumentationen von Libraries, Frameworks usw.
+** Insbesondere Angular & Angular Material
+* Im Rahmen der Angabe bereitgestellte Dokumente & Codeausschnitte
+
+=== Nicht erlaubte Hilfsmittel
+
+* Die Hilfe anderer Personen
+* Fertige Projekte (Source Code Hosting Seiten oder auch lokal)
+** nicht erlaubt sind also GitHub, BitBucket, GitLab usw.
+* Lange (vollständige) Programmcodes
+
+== Vorbereitende Arbeiten
+
+. Backend
+** (Quarkus & Angular Prüfung) Vervollständige erst das Backend, du benötigst die API für die Implementierung des Frontends
+** (Angular-only Prüfung) Das vollständige Backend wird als lauffähiges JAR File zur Verfügung gestellt -- konzentriere dich auf die Frontend Implementierung
+. Erstelle, mittels Angular CLI, ein neues Angular Projekt
+** Routing ist nicht unbedingt erforderlich, um Konsistenz mit den Übungen zu erhalten würde ich es allerdings aktivieren
+** Das Farbschema ist dir überlassen, ebenso die CSS Variante
+. Füge _Angular Materials_, via CLI mit Standardeinstellungen, hinzu
+. (Angular-only Prüfung) Füge das Modul `ng2-charts` via CLI hinzu
+
+== Ausgangssituation
+
+* Das Backend stellt Temperaturwerte für Linz-Stadt zur Verfügung.
+Dabei ist für jeden Monat eines Jahres die Durchschnittstemperatur erfasst.
+Daten sind für Jahre ab 1816 verfügbar.
+* Das Frontend soll es ermöglichen einen Monat auszuwählen und anschließend alle verfügbaren Daten (vom Backend bereitgestellt) in einer Tabelle anzuzeigen.
+* (Angular-only Prüfung) Um den Effekt des Klimawandels besser kenntlich zu machen werden die Daten auch in einem Line-Chart dargestellt.
+
+== Aufgabenstellung
+
+=== Temperatur Frontend
+
+image::app.png[App]
+
+==== Service
+
+* Daten zu den Temperaturwerten werden vom Backend bereitgestellt
+* Konkret die REST API `/api/temperature` liefert _alle_ Temperaturdaten für _alle_ Monate und _alle_ Jahre
+* Der Service soll diese Daten _lazy_ laden, also erst beim ersten Zugriff durch eine Komponente den Request zum Backend senden
+** Entscheide, ob in diesem Szenario `Observable` oder `Promise` besser geeignet ist
+** Jedenfalls wirst du einen HTTP Aufruf absetzen müssen, dafür ist ein bestimmtes Angular Modul sehr gut geeignet...
+* Der Service aggregiert die Daten so, dass die Komponenten diese für einzelne Monate anfordern können
+** Das heißt es werden etwa 'Daten für August' angefordert => liefere die Temperaturwerte für den August _aller Jahre_
+** Nutze eine passende Datenstruktur, in der du diese Werte am Client _vorhältst_ (Caching) => es soll _nicht_ bei jeder Abfrage wieder ein Request ans Backend geschickt werden
+* Tipps:
+** Sieh dir an welche Daten (und in welcher Form) du vom Backend erhältst und welche du für die Anwendung benötigst
+*** Eventuell ist es hilfreich _Mappung_ durchzuführen
+*** Denke auch daran, dass du _Duck Typing_ & _Interfaces_ einsetzen kannst (und sollst)
+** Du kannst Datentypen im File des Service definieren und für die Nutzung in Komponenten _exportieren_
+
+==== Components
+
+* Die Angular Anwendung besteht aus drei Komponenten
+* App (Main)
+** Kümmert sich um Überschrift und Positionierung (Layout) des App-Bereichs
+** Leitet Informationen über das in der Month-Selection gewählte Monat an die Data-Display Komponente weiter
+** => Enthält die anderen beiden Komponenten
+* Month-Selection
+** Bietet ein Dropdown-Menü in dem alle Monate (von Jänner - Dezember) ausgewählt werden können
+*** Jänner soll _voreingestellt_ sein
+*** => Stelle sicher, dass dabei auch die Daten für Jänner direkt bei Start der App geladen werden
+** Der ausgewählte Monat wird _publiziert_
+* Data-Display
+** Stellt Daten zum ausgewählten Monat (Jahr & Durchschnittstemperatur in diesem Monat in diesem Jahr) in Form einer Tabelle dar
+** Die Daten werden vom _Service_ bereitgestellt
+** Reagiere auf Änderungen des ausgewählten Monats
+* Nutze Angular Material Komponenten
+
+=== (Angular-only Prüfung zusätzlich) Temperatur Chart
+
+image::app_extended.png[App Extended]
+
+* Füge eine weitere Komponente `Chart` hinzu
+* Diese ist _Teil_ der `Data-Display` Komponente
+* Aufgabe der Komponente ist es, die Durchschnittstemperatur in einem bestimmten Monat _pro Jahrzehnt_ zu ermitteln (aggregieren!) und in Form eines Linien-Diagramms darzustellen
+** Beginne mit dem ersten verfügbaren Jahr => das erste Jahrzehnt ist 1816-1826 und _nicht_ 1810-1820
+** Wenn das letzte Jahrzehnt nicht mehr 'vollständig' ist (z.B. nur noch 8 Jahre Daten verfügbar) schließe dieses, letzte Jahrzehnt mit dem letzten verfügbaren Jahr ab => der Zeitraum für das letzte Jahrzehnt kann kürzer sein
+* Die Darstellung erfolgt mittels des zuvor hinzugefügten `ng2-charts` Moduls, dass die bekannte Library `chart.js` beinhaltet und diese durch Direktiven für Angular gut nutzbar macht
+* Die Chart Komponente erhält dieselben Daten wie die `Data-Display` Komponente
+** => Werden weitergeleitet
+** Soll sich somit auch zeitgleich mit der `Data-Display` Komponente aktualisieren wenn ein anderer Monat ausgewählt wird
+
+==== Hilfestellungen
+
+Die folgenden Codeausschnitte können dir bei der Implementierung des Charts helfen.
+
+.chart.component.html
+[source, angular2html]
+----
+<canvas baseChart width="600" height="200"
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+        [type]="lineChartType"></canvas>
+----
+
+.chart.component.ts
+[source,javascript]
+----
+...
+public readonly lineChartType: ChartType;
+public lineChartData: ChartConfiguration['data'];
+public lineChartOptions: ChartConfiguration['options'];
+...
+constructor() {
+    this.lineChartType = 'line';
+    this.lineChartData = this.getChartData();
+    this.lineChartOptions = {
+      elements: {
+        line: {
+          tension: 0.5
+        }
+      }
+    };
+    ...
+  }
+  ...
+private getChartData(): ChartConfiguration['data'] {
+    const [dataPoints, labels] = ...
+    return {
+      datasets: [
+        {
+          data: dataPoints,
+          label: '°C',
+          backgroundColor: 'rgba(148,159,177,0.2)',
+          borderColor: 'red',
+          pointBackgroundColor: 'rgba(148,159,177,1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(148,159,177,0.8)'
+        }
+      ],
+      labels: labels
+    };
+  }
+----
+
+== Links
+
+* https://angular.io/docs[Angular]
+* https://material.angular.io/[Angular Material]
+* ng2-charts
+** https://www.npmjs.com/package/ng2-charts[Package]
+** https://valor-software.com/ng2-charts/[Examples & Doku]

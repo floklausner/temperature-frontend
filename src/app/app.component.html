@@ -1,0 +1,9 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Linz Temperatures</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <app-month-selection (selMonthChanged)="handleSelMonthChanged($event)"></app-month-selection>
+    <app-data-display *ngIf="selectedMonth !== null" [selectedMonth]="selectedMonth"></app-data-display>
+  </mat-card-content>
+</mat-card>
